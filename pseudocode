@@ -1,0 +1,73 @@
+SCAN Landsat directory for HDF files
+CREATE Landsat_file_list
+
+SCAN MODIS directory for HDF files
+CREATE MODIS_file_list
+
+FOR EACH Year_Filter in Year_Filters
+
+    FILTER Landsat_file_list
+    FILTER MODIS_file_list
+
+    FOR EACH dataset in NDVI, EVI, EVI2
+        CREATE CSV stats file
+    NEXT dataset
+
+    FOR EACH Landsat_File in Landsat_file_list
+        
+        GET Date from Landsat_File
+        MATCH MODIS_File
+
+        IF Slack_Day provided
+            DATE1 = DATE - 1
+            MATCH MODIS_File_Date1
+            DATE2 = DATE + 1
+            MATCH MODIS_File_Date2
+        END IF
+
+        FOR EACH dataset in NDVI, EVI, EVI2
+            FOR EACH stat in avg, min, max, stdev, count, percent
+                OPEN Landsat_dataset_stat (e.g. NDVI_avg)
+                OPEN MODIS_dataset_stat (e.g. NDVI_avg)
+                IF Slack_Day provided
+                    OPEN MODIS_dataset_stat from MODIS_File_Date1
+                    OPEN MODIS_dataset_stat from MODIS_File_Date2
+                END IF
+            NEXT stat
+
+            INITIALIZE CSV_Line
+            
+            FOR EACH Pixel
+                READ Landsat_dataset_stats
+                IF (Landsat_dataset_avg == NO_DATA)
+                    SKIP Pixel
+                END IF
+
+                CONCATENATE Landsat_dataset_stats
+
+                READ MODIS_dataset_stats
+                IF (MODIS_dataset_avg == NO_DATA) AND MODIS_File_Date1
+                    READ MODIS_dataset_stats from MODIS_File_Date1
+                END IF
+
+                IF (MODIS_dataset_avg == NO_DATA) AND MODIS_File_Date2
+                    READ MODIS_dataset_stats from MODIS_File_Date2
+                END IF
+
+                IF (MODIS_dataset_avg == NO_DATA)
+                    SKIP Pixel
+                END IF
+
+                CONCATENATE MODIS_dataset_stats
+
+                WRITE CSV_Line in corresponding CSV stats file
+            NEXT Pixel
+            
+        NEXT dataset
+    NEXT Landsat_File
+
+    FOR EACH dataset in NDVI, EVI, EVI2
+        CLOSE CSV stats file
+    NEXT dataset
+
+NEXT Year_Filter
