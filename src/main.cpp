@@ -7,6 +7,7 @@
  * - 2025-10-30: Fixed DOY not present in EVI & EVI2                                            *
  * - 2025-11-14: Fallback to retrieve values from +1/-1 days when indalid MODIS data, pixelwise *
  * - 2025-11-19: Fixed formula to calculate pixel position                                      * 
+ * - 2026-01-29: Recompiled with updated GDAL libraries                                         * 
  ************************************************************************************************/
 
 #include <cstdint>

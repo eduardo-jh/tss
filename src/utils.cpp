@@ -530,9 +530,9 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         return EXIT_FAILURE;
     }
     // CSV headers
-    csvFile << "Date,Year,DOY,Pixel,Row,Col,Min,Max,Avg,Stdev,Count,Percent";
+    csvFile << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
     if (list_input_dirs.size() > 1 ) {
-        csvFile << ",MODIS_DOY,Min,Max,Avg,Stdev,Count,Percent";
+        csvFile << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent";
     }
     csvFile << std::endl;
 
@@ -550,9 +550,9 @@ bool files2ts(const std::vector<std::string> &list_files_1,
             std::cerr << "ERROR: Failed to open stats CSV file" << std::endl;
             return EXIT_FAILURE;
         }
-        csvFile2 << "Date,Year,DOY,Pixel,Row,Col,Min,Max,Avg,Stdev,Count,Percent";
+        csvFile2 << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
         if (list_input_dirs.size() > 1 ) {
-            csvFile2 << ",MODIS_DOY,Min,Max,Avg,Stdev,Count,Percent";
+            csvFile2 << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent";
         }
         csvFile2 << std::endl;
     }
@@ -571,9 +571,9 @@ bool files2ts(const std::vector<std::string> &list_files_1,
             std::cerr << "ERRIR: Failed to open stats CSV file" << std::endl;
             return EXIT_FAILURE;
         }
-        csvFile3 << "Date,Year,DOY,Pixel,Row,Col,Min,Max,Avg,Stdev,Count,Percent";
+        csvFile3 << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
         if (list_input_dirs.size() > 1 ) {
-            csvFile3 << ",MODIS_DOY,Min,Max,Avg,Stdev,Count,Percent";
+            csvFile3 << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent";
         }
         csvFile3 << std::endl;
     }
