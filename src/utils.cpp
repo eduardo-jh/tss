@@ -513,7 +513,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
     // Create time series from list of files
     // Landsat=list_files_1, MODIS=list_files_2
     
-    const std::vector<std::string> stats = {"avg", "min", "max", "stdev", "count", "percent"};
+    const std::vector<std::string> stats = {"avg", "min", "max", "stdev", "count", "percent", "sza"};
     const std::vector<int> slack_days = {0, -1, 1};
     const std::string EXTENSION = ".csv";
 
@@ -532,7 +532,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
     // CSV headers
     csvFile << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
     if (list_input_dirs.size() > 1 ) {
-        csvFile << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent";
+        csvFile << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent,M_SZA";
     }
     csvFile << std::endl;
 
@@ -552,7 +552,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         }
         csvFile2 << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
         if (list_input_dirs.size() > 1 ) {
-            csvFile2 << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent";
+            csvFile2 << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent,M_SZA";
         }
         csvFile2 << std::endl;
     }
@@ -573,7 +573,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         }
         csvFile3 << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
         if (list_input_dirs.size() > 1 ) {
-            csvFile3 << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent";
+            csvFile3 << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent,M_SZA";
         }
         csvFile3 << std::endl;
     }
@@ -603,6 +603,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         std::vector<int16_t> modis_dataset_std;
         std::vector<int16_t> modis_dataset_cnt;
         std::vector<double> modis_dataset_per;
+        std::vector<int16_t> modis_dataset_sza;
 
         // In case there is a second DOY (-1: the day before)
         std::vector<int16_t> modis_dataset_avg_2;
@@ -611,6 +612,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         std::vector<int16_t> modis_dataset_std_2;
         std::vector<int16_t> modis_dataset_cnt_2;
         std::vector<double> modis_dataset_per_2;
+        std::vector<int16_t> modis_dataset_sza_2;
 
         // In case there is a third DOY (+1: the day after)
         std::vector<int16_t> modis_dataset_avg_3;
@@ -619,6 +621,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         std::vector<int16_t> modis_dataset_std_3;
         std::vector<int16_t> modis_dataset_cnt_3;
         std::vector<double> modis_dataset_per_3;
+        std::vector<int16_t> modis_dataset_sza_3;
         
         // Get the current Landsat file name
         file_name = list_files_1[i];
@@ -718,7 +721,11 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                 // Find the dataset's position
                 int pos = get_position(dataset_names, single_dataset);
                 std::cout << "\n*************************************************************************************\n";
-                std::cout << "--Reading Landsat dataset: " << single_dataset << " pos=(" << pos << ")" << "\n";
+                if (stat == "sza") {
+                    std::cout << "--IGNORING Landsat dataset: " << single_dataset << " pos=(" << pos << ")" << "\n";
+                } else {
+                    std::cout << "--Reading Landsat dataset: " << single_dataset << " pos=(" << pos << ")" << "\n";
+                }
 
                 // For the special case of "EVI2 (calc)"
                 if (dataset == "EVI2" && pos == -1) {
@@ -729,10 +736,10 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     std::cout << "'EVI2' not found, trying '" << single_dataset << "'... \n";
                 }
 
-                if (pos == -1) {
-                    std::cout << "WARNING! Dataset " << single_dataset << " pos=(" << pos << ") not found! Skipping.\n";
-                    continue;
-                }
+                // if (pos == -1) {
+                //     std::cout << "WARNING! Dataset " << single_dataset << " pos=(" << pos << ") not found! Skipping.\n";
+                //     continue;
+                // }
 
                 // *************** Read all Landsat datasets ***************
 
@@ -806,6 +813,11 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     single_dataset = dataset + "_" + stat;
                 }
 
+                // Special case for the Sensor Zenith Angle
+                if (stat == "sza") {
+                    single_dataset = "SensorZenith_avg";
+                }
+
                 // Find the dataset's position
                 int modis_pos = get_position(modis_dataset_names, single_dataset);
                 std::cout << "--Reading MODIS dataset: " << single_dataset << " pos=(" << modis_pos << ")" << "\n";
@@ -869,6 +881,15 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                         << dataset_cols << "] (" << modis_dataset_per.size() << ")\n";
                 }
 
+                if (stat == "sza") {
+                    if (!read_hdf4_by_index(abs_modis_file_name, modis_pos, modis_dataset_sza, dataset_rows, dataset_cols)) {
+                        std::cerr << "ERROR: Cannot read HDF4 dataset " << modis_pos << std::endl;
+                        return EXIT_FAILURE;
+                    }
+                    std::cout << "--Dataset: " << single_dataset << " [" << dataset_rows << "x"
+                        << dataset_cols << "] (" << modis_dataset_sza.size() << ")\n";
+                }
+
                 // *************** Read all MODIS datasets for the SECOND DOY ***************
 
                 if (match_day.size() > 1) {
@@ -884,6 +905,11 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     // Reset for MODIS in case of EVI2 (calc)
                     if (single_dataset == "EVI2 (calc)_" + stat) {
                         single_dataset = dataset + "_" + stat;
+                    }
+
+                    // Special case for the Sensor Zenith Angle
+                    if (stat == "sza") {
+                        single_dataset = "SensorZenith_avg";
                     }
 
                     // Find the dataset's position
@@ -948,6 +974,15 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                         std::cout << "--Dataset: " << single_dataset << " [" << dataset_rows << "x"
                             << dataset_cols << "] (" << modis_dataset_per_2.size() << ")\n";
                     }
+
+                    if (stat == "sza") {
+                        if (!read_hdf4_by_index(abs_modis_file_name, modis_pos, modis_dataset_sza_2, dataset_rows, dataset_cols)) {
+                            std::cerr << "ERROR: Cannot read HDF4 dataset " << modis_pos << std::endl;
+                            return EXIT_FAILURE;
+                        }
+                        std::cout << "--Dataset: " << single_dataset << " [" << dataset_rows << "x"
+                            << dataset_cols << "] (" << modis_dataset_sza_2.size() << ")\n";
+                    }
                 }
 
                 // *************** Read all MODIS datasets for the THIRD DOY ***************
@@ -965,6 +1000,11 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     // Reset for MODIS in case of EVI2 (calc)
                     if (single_dataset == "EVI2 (calc)_" + stat) {
                         single_dataset = dataset + "_" + stat;
+                    }
+
+                    // Special case for the Sensor Zenith Angle
+                    if (stat == "sza") {
+                        single_dataset = "SensorZenith_avg";
                     }
 
                     // Find the dataset's position
@@ -1029,6 +1069,15 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                         std::cout << "--Dataset: " << single_dataset << " [" << dataset_rows << "x"
                             << dataset_cols << "] (" << modis_dataset_per_3.size() << ")\n";
                     }
+
+                    if (stat == "sza") {
+                        if (!read_hdf4_by_index(abs_modis_file_name, modis_pos, modis_dataset_sza_3, dataset_rows, dataset_cols)) {
+                            std::cerr << "ERROR: Cannot read HDF4 dataset " << modis_pos << std::endl;
+                            return EXIT_FAILURE;
+                        }
+                        std::cout << "--Dataset: " << single_dataset << " [" << dataset_rows << "x"
+                            << dataset_cols << "] (" << modis_dataset_sza_3.size() << ")\n";
+                    }
                 }
 
                 // *************** Done reading all stats for dataset ***************
@@ -1056,6 +1105,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     int16_t modis_std = modis_dataset_std[pixel];
                     int16_t modis_cnt = modis_dataset_cnt[pixel];
                     double modis_per = modis_dataset_per[pixel];
+                    int16_t modis_sza = modis_dataset_sza[pixel];
 
                     // Filter Landsat by range and no_data
                     if ((landsat_avg == no_data) || (landsat_avg < vmin) || (landsat_avg > vmax)) {
@@ -1076,6 +1126,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                             modis_std = modis_dataset_std_2[pixel];
                             modis_cnt = modis_dataset_cnt_2[pixel];
                             modis_per = modis_dataset_per_2[pixel];
+                            modis_sza = modis_dataset_sza_2[pixel];
                         }
 
                     }
@@ -1093,6 +1144,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                             modis_std = modis_dataset_std_3[pixel];
                             modis_cnt = modis_dataset_cnt_3[pixel];
                             modis_per = modis_dataset_per_3[pixel];
+                            modis_sza = modis_dataset_sza_3[pixel];
                         }
                     }
 
@@ -1116,7 +1168,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                         if (list_input_dirs.size() > 1) {
                             csvFile << "," << doy +  used_slack_doy << "," << modis_min << ","
                                     << modis_max << "," << modis_avg << "," << modis_std << ","
-                                    << modis_cnt << "," << modis_per;
+                                    << modis_cnt << "," << modis_per << "," << modis_sza;
                         }
                         csvFile << "\n";
                     }
@@ -1131,7 +1183,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                         if (list_input_dirs.size() > 1) {
                             csvFile2 << "," << doy + used_slack_doy << "," << modis_min << ","
                                      << modis_max << "," << modis_avg << "," << modis_std << ","
-                                     << modis_cnt << "," << modis_per;
+                                     << modis_cnt << "," << modis_per << "," << modis_sza;
                         }
                         csvFile2 << "\n";
                     }
@@ -1146,7 +1198,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                         if (list_input_dirs.size() > 1) {
                             csvFile3 << "," << doy +  used_slack_doy << "," << modis_min << ","
                                      << modis_max << "," << modis_avg << "," << modis_std << ","
-                                     << modis_cnt << "," << modis_per;
+                                     << modis_cnt << "," << modis_per << "," << modis_sza;
                         }
                         csvFile3 << "\n";
                     }
