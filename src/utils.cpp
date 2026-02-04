@@ -550,7 +550,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
             std::cerr << "ERROR: Failed to open stats CSV file" << std::endl;
             return EXIT_FAILURE;
         }
-        csvFile2 << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
+        csvFile2 << "Date,Year,DOY,Tile,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
         if (list_input_dirs.size() > 1 ) {
             csvFile2 << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent,M_SZA";
         }
@@ -571,7 +571,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
             std::cerr << "ERRIR: Failed to open stats CSV file" << std::endl;
             return EXIT_FAILURE;
         }
-        csvFile3 << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
+        csvFile3 << "Date,Year,DOY,Tile,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
         if (list_input_dirs.size() > 1 ) {
             csvFile3 << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent,M_SZA";
         }
@@ -1163,7 +1163,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     if (ds == 0) {
                         // Write Landsat
                         csvFile << date << "," << year << "," << doy << "," << tile << ","
-                                << pixel << "," << row << "," << col << "," 
+                                << pixel << "," << row << "," << col << ","
                                 << landsat_min << "," << landsat_max << ","
                                 << landsat_avg << "," << landsat_std << ","
                                 << landsat_cnt << "," << landsat_per;
@@ -1177,9 +1177,9 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     }
                     if (ds == 1) {
                         // Write Landsat
-                        csvFile2 << date << "," << year << "," << doy << ","
-                                 << pixel << "," << row << "," << col
-                                 << "," << landsat_min << "," << landsat_max << ","
+                        csvFile2 << date << "," << year << "," << doy << "," << tile << ","
+                                 << pixel << "," << row << "," << col << ","
+                                 << landsat_min << "," << landsat_max << ","
                                  << landsat_avg << "," << landsat_std << ","
                                  << landsat_cnt << "," << landsat_per;
                         // Write MODIS
@@ -1192,9 +1192,9 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     }
                     if (ds == 2) {
                         // Write Landsat
-                        csvFile3 << date << "," << year << "," << doy << ","
-                                 << pixel << "," << row << "," << col
-                                 << "," << landsat_min << "," << landsat_max << ","
+                        csvFile3 << date << "," << year << "," << doy << "," << tile << ","
+                                 << pixel << "," << row << "," << col << ","
+                                 << landsat_min << "," << landsat_max << ","
                                  << landsat_avg << "," << landsat_std << ","
                                  << landsat_cnt << "," << landsat_per;
                         // Write MODIS
