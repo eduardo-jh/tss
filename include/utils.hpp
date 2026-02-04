@@ -47,3 +47,4 @@ std::string match_file_doy(const int &year, const int &doy,
 );
 int find_int_position(const std::vector<int>& vec, int value);
 void extract_year(const std::string& filename, int& year);
+std::string extract_hv(const std::string& );

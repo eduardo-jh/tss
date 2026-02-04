@@ -40,7 +40,7 @@ void print_help() {
 void print_version(const std::string &version, const std::string &date) {
     std::cout << "tss - extraction of time series from HDF files in multiple dirs v"
               << version << " release " << date << "\n"
-              << "\nCopyright (C) 2025 Eduardo Jimenez Hernandez <eduardojh@arizona.edu>.\n"
+              << "\nCopyright (C) 2025-2026 Eduardo Jimenez Hernandez <eduardojh@arizona.edu>.\n"
               << "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n"
               << "This is free software: you are free to change and redistribute it.\n"
               << "There is NO WARRANTY, to the extent permitted by law."
@@ -530,7 +530,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         return EXIT_FAILURE;
     }
     // CSV headers
-    csvFile << "Date,Year,DOY,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
+    csvFile << "Date,Year,DOY,Tile,Pixel,Row,Col,L_Min,L_Max,L_Avg,L_Stdev,L_Count,L_Percent";
     if (list_input_dirs.size() > 1 ) {
         csvFile << ",MODIS_DOY,M_Min,M_Max,M_Avg,M_Stdev,M_Count,M_Percent,M_SZA";
     }
@@ -583,6 +583,7 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         int year;
         int doy;
         std::string date;
+        std::string tile;
         std::string file_name;
         std::string abs_file_name;
         std::vector<std::string> dataset_names;
@@ -629,11 +630,13 @@ bool files2ts(const std::vector<std::string> &list_files_1,
         // Prepare file name and extract string date, year, and DOY
         date = extract_date(file_name);
         extract_doy(file_name, year, doy);
+        tile = extract_hv(file_name);
 
         std::cout << std::endl;
         std::cout << "============================================================================================\n";
         std::cout << "=== Landsat File (" << i+1 << "): " << file_name << " " << date << " ===\n";
         std::cout << "============================================================================================\n";
+        std::cout << "Tile: " << tile << "\n";
 
         // Split each file name
         PathParts file_parts = splitPath(file_name);
@@ -1159,11 +1162,11 @@ bool files2ts(const std::vector<std::string> &list_files_1,
                     // use dataset counter to decide what file to write into
                     if (ds == 0) {
                         // Write Landsat
-                        csvFile << date << "," << year << "," << doy << ","
-                                << pixel << "," << row << "," << col
-                                << "," << landsat_min << "," << landsat_max << ","
-                                << landsat_avg << "," << landsat_std << "," <<
-                                landsat_cnt << "," << landsat_per;
+                        csvFile << date << "," << year << "," << doy << "," << tile << ","
+                                << pixel << "," << row << "," << col << "," 
+                                << landsat_min << "," << landsat_max << ","
+                                << landsat_avg << "," << landsat_std << ","
+                                << landsat_cnt << "," << landsat_per;
                         // Write MODIS
                         if (list_input_dirs.size() > 1) {
                             csvFile << "," << doy +  used_slack_doy << "," << modis_min << ","
@@ -1283,4 +1286,17 @@ void extract_year(const std::string& filename, int& year) {
     }
 
     year = std::stoi(match[1].str());
+}
+
+std::string extract_hv(const std::string& filename)
+{
+    // Regex: h followed by 2 digits, then v followed by 2 digits (e.g. h05v11)
+    std::regex pattern("(h\\d{2}v\\d{2})");
+    std::smatch match;
+
+    if (std::regex_search(filename, match, pattern)) {
+        return match[1].str();  // return the exact matched string
+    }
+
+    return ""; // not found
 }

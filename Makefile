@@ -2,7 +2,7 @@
 CXX := g++
 
 # Versioning: Major.Minor.Patches
-VERSION    ?= 1.6.3
+VERSION    ?= 1.6.4
 DATE       := $(shell date +%Y-%m-%d)
 DATETIME   := $(shell date +%Y-%m-%d_%H:%M:%S)
 
